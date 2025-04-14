@@ -1,4 +1,4 @@
-require:
+plugins:
 - rubocop-rake
 - rubocop-rspec
 
@@ -72,6 +72,10 @@ RSpec/VerifiedDoubles:
   Enabled: false
 
 RSpec/ExampleLength:
+  Enabled: false
+
+# does not understand .should
+RSpec/NoExpectationExample:
   Enabled: false
 
 Style/CombinableLoops:
