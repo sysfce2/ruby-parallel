@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require './spec/cases/helper'
+require "logger"
 require "active_record"
 require "sqlite3"
 require "tempfile"
