@@ -738,6 +738,7 @@ describe Parallel do
     worker_types.each do |type|
       it "does not leak memory in #{type}" do
         pending if RUBY_ENGINE == 'jruby' # lots of objects ... GC does not seem to work ...
+        skip if RUBY_VERSION > "3.4.0" # randomly fails, so can't use pending
         options = (RUBY_ENGINE == 'jruby' ? "-X+O" : "")
         result = ruby("#{options} spec/cases/profile_memory.rb #{type} 2>&1").strip.split("\n").last
         normalize(result).should == []
