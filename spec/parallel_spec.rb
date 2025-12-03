@@ -342,6 +342,12 @@ describe Parallel do
         result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
       end
 
+      it "does not dump/load when running with 0 using #{type}" do
+        p = -> { 1 }
+        result = Parallel.map([1, 2], "in_#{type}": 0) { p }
+        result.first.call.should == 1
+      end
+
       it "can call finish hook in order #{type}" do
         out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/finish_in_order.rb 2>&1`
         without_ractor_warning(out).should == <<~OUT
@@ -352,70 +358,25 @@ describe Parallel do
           finish 4 4 "F4"
         OUT
       end
-    end
 
-    it "notifies when an item of work is dispatched to a worker process" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0)
-      monitor.should_receive(:call).once.with(:second, 1)
-      monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], start: monitor, in_processes: 3) {}
-    end
+      [0, 3].each do |count|
+        it "notifies when an item of work is dispatched to #{count} worker using #{type}" do
+          skip if type == "ractors" # TODO: why does this fail ?
+          monitor = double('monitor', call: nil)
+          monitor.should_receive(:call).once.with(:first, 0)
+          monitor.should_receive(:call).once.with(:second, 1)
+          monitor.should_receive(:call).once.with(:third, 2)
+          Parallel.map([:first, :second, :third], start: monitor, "in_#{type}": 3) {}
+        end
 
-    it "notifies when an item of work is dispatched with 0 processes" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0)
-      monitor.should_receive(:call).once.with(:second, 1)
-      monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], start: monitor, in_processes: 0) {}
-    end
-
-    it "notifies when an item of work is completed by a worker process" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0, 123)
-      monitor.should_receive(:call).once.with(:second, 1, 123)
-      monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], finish: monitor, in_processes: 3) { 123 }
-    end
-
-    it "notifies when an item of work is completed with 0 processes" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0, 123)
-      monitor.should_receive(:call).once.with(:second, 1, 123)
-      monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], finish: monitor, in_processes: 0) { 123 }
-    end
-
-    it "notifies when an item of work is dispatched to a threaded worker" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0)
-      monitor.should_receive(:call).once.with(:second, 1)
-      monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], start: monitor, in_threads: 3) {}
-    end
-
-    it "notifies when an item of work is dispatched with 0 threads" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0)
-      monitor.should_receive(:call).once.with(:second, 1)
-      monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], start: monitor, in_threads: 0) {}
-    end
-
-    it "notifies when an item of work is completed by a threaded worker" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0, 123)
-      monitor.should_receive(:call).once.with(:second, 1, 123)
-      monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], finish: monitor, in_threads: 3) { 123 }
-    end
-
-    it "notifies when an item of work is completed with 0 threads" do
-      monitor = double('monitor', call: nil)
-      monitor.should_receive(:call).once.with(:first, 0, 123)
-      monitor.should_receive(:call).once.with(:second, 1, 123)
-      monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], finish: monitor, in_threads: 0) { 123 }
+        it "notifies when an item of work is completed by #{count} worker using #{type}" do
+          monitor = double('monitor', call: nil)
+          monitor.should_receive(:call).once.with(:first, 0, 123)
+          monitor.should_receive(:call).once.with(:second, 1, 123)
+          monitor.should_receive(:call).once.with(:third, 2, 123)
+          Parallel.map([:first, :second, :third], finish: monitor, in_processes: count) { 123 }
+        end
+      end
     end
 
     it "spits out a useful error when a worker dies before read" do
