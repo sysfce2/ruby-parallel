@@ -6,6 +6,23 @@
 
 - Add here when making a PR
 
+## 2.2.0
+
+### Added
+- Redact HMAC secrets from inspect output
+
+### Fixed
+- filter_map rejects falsy valus
+- restore the outer worker number after direct execution
+- compare producer stop markers by identity
+- ractor stop and crash handling
+- ractor direct mode with 0 workers
+- avoid storing or transferring discarded each results
+- ractor item index works
+- validate worker counts
+- clean up partially created process workers
+- avoid storing or transferring discarded each results
+
 ## 2.1.0
 
 ### Added
